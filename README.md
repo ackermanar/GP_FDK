@@ -7,6 +7,6 @@ Project goals are to analyze the potential advantages of using VIBE imaging (htt
 phenotypes = FDK_ALLDATA_hmpEntries_NoLA.csv
 kinship matrix developed using A.mat = LD08_numeric.kin.txt
 
-## Sctipts
+## Scripts
 
 FDK_MultivariateGP.R - uses each phenotype as a covariate to predict DON content, testing effectiveness of all individual phenotypes as covariates. Hypothesis is that predicting DON using VIBE as a covariate will have more accurate predictions than DON alone, and DON + other FDK phenotypes.
