@@ -6,7 +6,6 @@ Project goals are to analyze the potential advantages of using VIBE imaging (htt
 
 phenotypes = FDK_ALLDATA_hmpEntries_NoLA.csv
 kinship matrix developed using A.mat = LD08_numeric.kin.txt
-hmp = FDK_LD08.hmp.txt
 
 ## Sctipts
 
