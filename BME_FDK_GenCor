@@ -1,0 +1,31 @@
+###BME for Genetic Covariance between Traits###
+
+install.packages("BMTME",repos='http://cran.us.r-project.org', dependencies = TRUE)
+
+setwd("/home/arlyna/FDK/FDK_BME/")
+
+library(BMTME)
+
+Pheno <- read.table("/home/arlyna/FDK/FDK_BME/FDK_BLUPs_AllTraits.txt")
+Geno <- as.matrix(read.table("FDK_Kin_Matrix.txt", header=TRUE, sep = "\t", row.names = 1, as.is=TRUE))
+
+LG <- cholesky(Geno)
+ZG <- model.matrix(∼0 + as.factor(Pheno$Taxa))
+Z.G <- ZG %*% LG
+
+Y <- as.matrix(Pheno[, -c(1)])
+
+fm <- BME(Y = Y, Z1 = Z.G, nIter = 30000, burnIn = 20000, thin = 2, bs = 50)
+saveRDS(fm, file = '/home/arlyna/FDK/FDK_BME/FDK_BME_BLUPs_AllTraits_fm.rds')
+
+#Extract genetic covariance between traits and convert to correlation matrix
+
+COV_TraitGenetic <- fm$varTrait
+COR_TraitGenetic <- cov2cor(COV_TraitGenetic)
+write.csv(COR_TraitGenetic, file = '/home/arlyna/FDK/FDK_BME/FDK_BME_AllTraits_CovTraitGen.csv')
+
+
+#Extract residual covariance matrix
+
+COV_ResGenetic <- fm$vare
+write.csv(COV_ResGenetic, file = '/home/arlyna/FDK/FDK_BME/FDK_BME_AllTraits_CovResidual.csv')
