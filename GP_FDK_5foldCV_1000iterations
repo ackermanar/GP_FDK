@@ -1,0 +1,114 @@
+###Kin.Blup for Genomic Prediction using 5 fold cross validation, 5 seperate phenotypes organized in columns, and 1000 iterations per phenotype 
+setwd("/Users/ackerman/FDK/FDK_GenPred/FDK_kin.blup/")
+
+library(caret)
+library(rrBLUP)
+library(dplyr)
+library(data.table)
+
+#load in phenotype data and kinship matrix
+
+data <- read.csv("/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_ALLDATA_hmpEntries_NoLA.csv", header = FALSE)
+kin <- as.matrix(read.table("/Users/ackerman/FDK/FDK_Data/FDK_Geno/Kinship/LD08_numeric.kin.txt", header = , sep = "\t", row.names = 1, as.is=TRUE))
+
+
+FDK_gBLUP_PredCor <- data.frame(y = 1:1000)
+FDK_gBLUP_gCor <- data.frame(y = 1:1000)
+
+for (i in 3:ncol(data)) {
+  predcor_values <- vector()
+  gcor_values <- vector()
+  
+#create pheno file for single trait
+y <- data %>% 
+  select(taxa, Env, all_of(i)) %>%
+  rename(trait = 3)
+y <- na.omit(y)
+rownames(y) = seq(length=nrow(y))
+
+#repeat loop 1000 time for trait n
+k <- 0
+  repeat {
+    #add 1 value to k for each iteration
+    k <- k + 1 
+    if(k > 1000){break}
+    
+    #Make empty vecotrs to append 1000 cor values to 
+    trainset_pred <- data.frame()
+    testset_pred <- data.frame()
+    trainset_g <- data.frame()
+    testset_g <- data.frame()
+    
+#Use caret to create 5 stratified partitions for test & train 
+    
+training.kfold <- groupKFold(y$taxa, k = 5)
+
+#Mask testing set within the trianing set with NA and create testing set with available testing data
+
+for (j in training.kfold) {
+yNA <- y$trait %>%
+  replace(-j, "NA")
+train <- data.frame(y$taxa, y$Env, yNA)
+train[,"yNA"] <- as.numeric(train$yNA)
+
+#Create test set by subtracting training set from y
+
+test <- y %>% 
+  slice(-j)
+
+#Run k.blup for prediction of genomic values
+
+trainset <- kin.blup(train,geno="y.taxa",pheno="yNA",fixed="y.Env", n.core=12)
+testset <- kin.blup(test,geno="taxa",pheno="trait",fixed="Env", n.core=12)
+
+#Perform pearson correlations for observed and expected values
+  #(ugly - nesting this with pipes doesnt work?)
+
+  #Perform for pred blup values
+testset_results <- as.data.frame(testset$pred) 
+testset_results <- setDT(testset_results, keep.rownames = TRUE)
+testset_results <- rename(testset_results, taxa = rn)
+testset_results <- filter(testset_results, testset_results$taxa %in% test$taxa)
+testset_pred <- bind_rows(testset_pred, testset_results)
+
+trainset_results <- as.data.frame(trainset$pred)
+trainset_results <- setDT(trainset_results, keep.rownames = TRUE)
+trainset_results <- rename(trainset_results, taxa = rn)
+trainset_results <- filter(trainset_results, trainset_results$taxa %in% test$taxa)
+trainset_pred <- bind_rows(trainset_pred, trainset_results)
+
+  #Perform for g values
+
+testset_gresults <- as.data.frame(testset$g) 
+testset_gresults <- setDT(testset_gresults, keep.rownames = TRUE)
+testset_gresults <- rename(testset_gresults, taxa = rn)
+testset_gresults <- filter(testset_gresults, testset_gresults$taxa %in% test$taxa)
+testset_g <- bind_rows(testset_g, testset_gresults)
+
+} #All folds are done
+  #Add correlation of prediction and observed to vector
+
+TrainTest_PredCor <- left_join(trainset_pred,testset_pred, by = "taxa")
+predcor <- cor(TrainTest_PredCor[2], TrainTest_PredCor[3], method = "pearson")
+
+predcor_values <- append(predcor_values, predcor)
+
+  #Add correlation of g and observed to vector
+
+TrainTest_gCor <- left_join(trainset_pred,testset_g, by = "taxa")
+gcor <- cor(TrainTest_gCor[2], TrainTest_gCor[3], method = "pearson")
+
+gcor_values <- append(gcor_values, gcor)
+
+} #break repeat loop after 1000 iterations are done
+
+predcor_values <- as.data.frame(predcor_values)
+gcor_values <- as.data.frame(gcor_values)
+
+FDK_gBLUP_PredCor <- bind_cols(FDK_gBLUP_PredCor, predcor_values)
+FDK_gBLUP_gCor <- bind_cols(FDK_gBLUP_gCor, gcor_values)
+
+} #repeat for each phenotype/trait/column
+
+write.csv(FDK_gBLUP_PredCor, "FDK_gBLUP_PredCor.csv")
+write.csv(FDK_gBLUP_PredCor, "FDK_gBLUP_gCor.csv")
