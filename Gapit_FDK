@@ -1,0 +1,19 @@
+###Gapit for FDK platforms###
+
+library(GAPIT3)
+library(dplyr)
+
+setwd("/Users/ackerman/FDK/FDK_GWAS/FDK_GAPIT_GWAS/FDK_BLUES_AmatKin")
+
+myY <- read.csv("/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_BLUEs/FDK_BLUEs_All.csv",  header = TRUE)
+myG <- read.table("/Users/ackerman/FDK/FDK_Data/FDK_Geno/Hapmap/Wheat_LD08_Filter_05.hmp.txt", header = FALSE, sep = "\t")
+myKI <- read.table("/Users/ackerman/FDK/FDK_Data/FDK_Geno/Kinship/Wheat_kin_sommerAmat.txt", header = FALSE, sep = "\t")
+
+
+myGAPIT <- GAPIT(
+  Y=myY,
+  G=myG,
+  K=myKI,
+  PCA.total = 0,
+  model="BLINK"
+)
