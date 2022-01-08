@@ -14,6 +14,6 @@ myGAPIT <- GAPIT(
   Y=myY,
   G=myG,
   K=myKI,
-  PCA.total = 0,
+  PCA.total=0,
   model="BLINK"
 )
