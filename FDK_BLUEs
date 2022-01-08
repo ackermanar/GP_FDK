@@ -1,0 +1,28 @@
+#Use lme4 to develop BLUEs
+
+library(data.table)
+library(lme4)
+library(emmeans)
+library(dplyr)
+
+#upload pheno data
+DT <- read.csv("/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_BLUEs", header = TRUE)
+
+#Adjusted for FDK dataset
+mixed.mod <- lmer(DON_ppm ~ taxa + (1|Env) + (1|Trial:Env) + (1|taxa:Env), data = DT)
+
+#calcuate with emmeans
+
+emmeans.out1 <- emmeans(mixed.mod, "taxa", lmer.df = "asymptotic")
+emmeans.out2 <- summary(emmeans.out1)
+emmeans.out3 <- emmeans.out2[,1:2] #save columns
+
+summary(mixed.mod)
+
+#Alternative extraction - calculate with lme4(fixef)
+
+blues <- as.data.frame(fixef(mixed.mod))
+
+#Push to excel and finish there
+
+write.csv(blues, "/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_BLUEs/FDK_BLUEs_DON.csv")
