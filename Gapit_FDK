@@ -1,19 +1,36 @@
-###Gapit for FDK platforms###
+#GAPIT3 using BLINK, Kinship file for population structure
+#by AJ Ackerman
+#November 2021
 
-library(GAPIT3)
-library(dplyr)
+###############################################################################
 
-setwd("/Users/ackerman/FDK/FDK_GWAS/FDK_GAPIT_GWAS/FDK_BLUES_AmatKin")
+#Install with source code
+source("http://zzlab.net/GAPIT/GAPIT.library.R")
+source("http://zzlab.net/GAPIT/gapit_functions.txt")
 
-myY <- read.csv("/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_BLUEs/FDK_BLUEs_All.csv",  header = TRUE)
+#Or install with devtools
+install.packages("devtools")
+devtools::install_github("jiabowang/GAPIT3",force=TRUE)
+library("GAPIT3")
+
+#If still giving errors install with tarball
+install.packages("GAPIT3-GAPIT3.2.tar.gz", repos = NULL, type="source")
+#Open and view tarball
+tar -xvf GAPIT3-GAPIT3.2.tar.gz
+
+#Working directory folder will be output of GAPIT files
+setwd("/outputfolder/")
+
+#Upload data for GAPIT
+myY <- read.csv("/Users/ackerman/FDK/FDK_Data/FDK_Pheno/FDK_eemeans/BLUES.csv",  header = TRUE)
 myG <- read.table("/Users/ackerman/FDK/FDK_Data/FDK_Geno/Hapmap/Wheat_LD08_Filter_05.hmp.txt", header = FALSE, sep = "\t")
 myKI <- read.table("/Users/ackerman/FDK/FDK_Data/FDK_Geno/Kinship/Wheat_kin_sommerAmat.txt", header = FALSE, sep = "\t")
 
-
+#Run Gapit, pca set to 0 because kinship accounts for population structure
 myGAPIT <- GAPIT(
   Y=myY,
   G=myG,
   K=myKI,
-  PCA.total=0,
+  pca.total=0
   model="BLINK"
 )
